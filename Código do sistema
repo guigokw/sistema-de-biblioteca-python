@@ -1,0 +1,388 @@
+titulo_livro = set()
+cpf_usuario = set()
+
+lista_de_livros = list()
+lista_de_usuarios = dict()
+
+
+class data_invalida_exception(Exception):
+    pass
+
+
+class titulo_duplicado_exception(Exception):
+    pass
+
+
+class livro_nao_encontrado_exception(Exception):
+    pass
+
+
+class cpf_duplicado_exception(Exception):
+    pass
+
+
+class cpf_invalido_exception(Exception):
+    pass
+
+
+class usuario_nao_encontrado_exception(Exception):
+    pass
+
+
+class livro_indisponivel_exception(Exception):
+    pass
+
+
+class Livro:
+    def __init__(self, titulo, autor, ano, disponivel, usuario_atual):
+        self.titulo = titulo
+        self.autor = autor
+        self.ano = ano
+        self.disponivel = True
+        self.usuario_atual = None
+
+
+class Usuario:
+    def __init__(self, cpf, nome, livros_emprestados):
+        self.cpf = cpf
+        self.nome = nome
+        self.livros_emprestados = []
+
+
+def adicionar_livro(titulo, autor, ano):
+    if titulo in titulo_livro:
+        raise titulo_duplicado_exception(
+            'não foi possivel adicionar esse livro a biblioteca pois o titulo esta duplicado')
+    else:
+        livro = Livro(titulo, autor, ano, True, None)
+
+        lista_de_livros.append(livro)
+        titulo_livro.add(titulo)
+        print(f'{titulo} do autor {autor} adicionado a biblioteca')
+
+
+def remover_livro(livro_para_remover):
+    if not lista_de_livros:
+        print('a lista de livros está vazia')
+    else:
+        for livro in livro_para_remover:
+            if livro:
+                lista_de_livros.remove(livro)
+                titulo_livro.remove(livro.titulo)
+                print(f'{livro.titulo} removido da lista da biblioteca')
+            else:
+               raise livro_nao_encontrado_exception('não foi possivel remover esse livro da biblioteca pois ele não foi encontrado')
+
+
+def listar_livros():
+    if not lista_de_livros:
+        print('a lista de livro está vazia')
+    else:
+        print('===== LISTA DE LIVROS DA BIBLIOTEA =====')
+        for livros in lista_de_livros:
+            print(f'TITULO: {livros.titulo}')
+            print(f'AUTOR: {livros.autor}')
+            print(f'ANO DE LANÇAMENTO: {livros.ano}')
+            print(f'USUARIO_ATUAL: {livros.usuario_atual}')
+            print('-----------------------')
+
+
+def adicionar_usuario(nome, cpf):
+    if cpf in cpf_usuario:
+        raise cpf_duplicado_exception('não foi possivel adicionar o usuário pois o cpf esta duplicado')
+    else:
+        usuario = Usuario(cpf, nome, [])
+
+        lista_de_usuarios[cpf] = {
+            'usuario': usuario
+        }
+
+        cpf_usuario.add(cpf)
+        print(f'usuario {nome} adicionado a lista de usuários da biblioteca')
+
+
+def remover_usuario(cpf):
+    if not lista_de_usuarios:
+        print('a lista de usuários está vazia')
+    else:
+        if cpf in lista_de_usuarios:
+            dados = lista_de_usuarios[cpf]['usuario']
+            lista_de_usuarios.pop(cpf)
+            cpf_usuario.remove(cpf)
+            print(f'usuario {dados.nome} removido')
+        else:
+          raise usuario_nao_encontrado_exception('não foi possivel remover o usuario pois ele não foi encontrado')
+
+
+def listar_livros_por_usuario(cpf):
+    if cpf in lista_de_usuarios:
+        dado = lista_de_usuarios[cpf]['usuario']
+        if dado.livros_emprestados:
+            print(f'===== LIVROS DO USUÁRIO {dado.nome} =====')
+            for livro in dado.livros_emprestados:
+                print(f'LIVRO: {livro.titulo}')
+                print('--------------------')
+        else:
+            print('esse usuário ainda não tem nenhum livro emprestado')
+    else:
+        raise usuario_nao_encontrado_exception(
+            'não foi possivel listar os livros do usuário pois ele não foi encontrado')
+
+
+def listar_usuarios():
+    if not lista_de_usuarios:
+        print('a lista de usuarios está vazia')
+    else:
+        print('===== LISTA DE USUÁRIOS ====')
+        for cpf_chave, info_usuario in lista_de_usuarios.items():
+            usuario = info_usuario['usuario']
+            print(f'NOME: {usuario.nome}')
+            print(f'CPF: {usuario.cpf}')
+            print('===== LIVROS EMPRESTADOS =====')
+            for livro in usuario.livros_emprestados:
+                if livro:
+                  print(f'LIVRO: {livro.titulo}')
+                  print('--------------------')
+                else:
+                  print('esse usuario não tem livros emprestados no momento')
+
+
+def realizar_emprestimo(dados_usuario):
+    tituloL = input('qual o titulo do livro que você deseja emprestar?').strip().upper()
+
+    livro_pra_emprestar = [l for l in lista_de_livros if l.titulo == tituloL]
+
+    for livro in livro_pra_emprestar:
+        if not livro.disponivel:
+            raise livro_indisponivel_exception('não foi possivel emprestar esse livro pois ele já foi emprestado')
+        else:
+            print(f'TITULO: {livro.titulo}')
+            print(f'AUTOR: {livro.autor}')
+            print(f'ANO DE LANÇAMENTO: {livro.ano}')
+            print('---------------------------')
+            print('1 - sim')
+            print('2 - não')
+            opcao6 = int(input('esse é o livro que você deseja realizar o emprestimo?'))
+
+            if opcao6 == 1:
+                dados = lista_de_usuarios[cpf]['usuario']
+
+                dados.livros_emprestados.append(livro)
+                livro.disponivel = False
+                livro.usuario_atual = dados_usuario.nome
+                print(f'livro {livro.titulo} emprestado para {dados.nome}')
+            elif opcao6 == 2:
+                print('se deseja emprestar outro livro, tente novamente')
+            else:
+                print('opção inválida, por favor digite novamente')
+
+
+def devolver_livro(livro):
+    cpf = input('informe o cpf do usuário que ira devolver esse livro').strip()
+
+    if cpf in lista_de_usuarios:
+        dados = lista_de_usuarios[cpf]['usuario']
+
+        lista_livro = dados.livros_emprestados
+        if livro in lista_livro:
+            lista_livro.remove(livro)
+            livro.disponivel = True
+            livro.usuario_atual = None
+            print(f'livro {livro.titulo} devolvido pelo usuário {dados.nome}')
+        else:
+            print('não foi possivel fazer a devolução do livro pois esse livro não foi emprestado para esse usuário')
+    else:
+        raise usuario_nao_encontrado_exception(
+            'não foi possivel realizar a devolução pois o usuário não foi encontrado')
+
+
+while True:
+    try:
+        print('===== SISTEMA DA BIBLIOTECA =====')
+        print('1 - gerenciar livros')
+        print('2 - gerenciar usuarios')
+        print('3 - gerenciar emprestimos')
+        print('4 - sair do programa')
+        print('=========================')
+
+        opcao = int(input('qual opção você deseja seguir?'))
+
+        if opcao == 1:
+            print('1 - adicionar livros')
+            print('2 - remover livros')
+            print('3 - listar livros')
+            print('4 - listar livros disponiveis')
+            print('5 - listar livros emprestados e com quem estão')
+            print('-----------------------')
+
+            opcao2 = int(input('qual operação você deseja realizar?'))
+
+            if opcao2 == 1:
+                titulo = input('qual o titulo do livro que você deseja adicionar a biblioteca?').upper().strip()
+
+                autor = input('qual o nome do autor desse livro?').strip().upper()
+
+                ano = int(input('qual o ano de lançamento desse livro?'))
+
+                if ano > 2025:
+                    raise data_invalida_exception(
+                        'não foi possivel adicionar esse livro pois o ano de lançamento esta depois de 2025 (ano atual)')
+                else:
+                    adicionar_livro(titulo, autor, ano)
+            elif opcao2 == 2:
+                tituloL = input('qual o titulo do livro que você deseja remover da biblioteca').strip().upper()
+                livro_para_remover = [l for l in lista_de_livros if l.titulo == tituloL]
+                remover_livro(livro_para_remover)
+            elif opcao2 == 3:
+                listar_livros()
+            elif opcao2 == 4:
+                if not lista_de_livros:
+                    print('a lista de livros esta vazia')
+                else:
+                    livros_disponiveis = [l for l in lista_de_livros if l.disponivel]
+
+                    if not livros_disponiveis:
+                        print('não há livros disponiveis no momento')
+                    else:
+                        print('==== LIVROS DISPONIVEIS =====')
+                        for livros in livros_disponiveis:
+                            print(f'TITULO: {livros.titulo}')
+                            print(f'AUTOR: {livros.autor}')
+                            print(f'ANO DE LANÇAMENTO: {livros.ano}')
+                            print('--------------------')
+            elif opcao2 == 5:
+                if not lista_de_livros:
+                    print('não há livros na biblioteca')
+                else:
+                  livros_emprestados = [l for l in lista_de_livros if not l.disponivel]
+
+                  if not livros_emprestados:
+                      print('não há livros emprestados no momento')
+                  else:
+                      print('===== LIVROS EMPRESTADOS =====')
+                      for livros in livros_emprestados:
+                          print(f'TITULO: {livros.titulo}')
+                          print(f'AUTOR: {livros.autor}')
+                          print(f'ANO DE LANÇAMENTO: {livros.ano}')
+                          print(f'USUARIO ATUAL: {livros.usuario_atual}')
+            else:
+                print('opção invalida, por favor tente novamente')
+        elif opcao == 2:
+            print('1 - adicionar usuário')
+            print('2 - remover usuário')
+            print('3 - listar livros emprestados do usuário')
+            print('4 - listar usuarios')
+            print('--------------------------')
+
+            opcao3 = int(input('qual operação você deseja realizar'))
+
+            if opcao3 == 1:
+                nome = input(
+                    'qual o nome do usuário que você deseja adicionar ao sistema da biblioteca?').strip().upper()
+
+                cpf = input('qual o cpf desse usuário?').strip()
+
+                if not len(cpf) == 11:
+                    raise cpf_invalido_exception('não foi possivel adicionar o usuario pois o cpf esta invalido')
+                else:
+                    adicionar_usuario(nome, cpf)
+            elif opcao3 == 2:
+                cpf = input('qual cpf do usuario qe você deseja remover?').strip()
+
+                remover_usuario(cpf)
+            elif opcao3 == 3:
+                cpf = input('qual o cpf do usuário que você deseja listar os livros emprestados').strip()
+                listar_livros_por_usuario(cpf)
+            elif opcao3 == 4:
+                listar_usuarios()
+            else:
+                print('opção invalida, por favor digite novamente')
+        elif opcao == 3:
+            print('1 - realizar emprestimo')
+            print('2 - devolver livro')
+
+            opcao4 = int(input('qual dessas operações você deseja seguir?'))
+
+            if opcao4 == 1:
+                if not lista_de_livros or not lista_de_usuarios:
+                    print(
+                        'não foi possivel realizar o emprestimos pois ou a lista de clientes esta vazia ou a lista de livros está vazia')
+                else:
+                    cpf = input('qual o cpf do usuário que você deseja realizar o empréstimo?').strip()
+
+                    if cpf in lista_de_usuarios:
+                        dados_usuario = lista_de_usuarios[cpf]['usuario']
+                        print('===== DADOS DO USUÁRIO =====')
+                        print(f'NOME: {dados_usuario.nome}')
+                        print(f'CPF: {dados_usuario.cpf}')
+                        if not dados_usuario.livros_emprestados:
+                            print('a lista de livros desse usuário esta vazia')
+                        else:
+                          print('===== LIVROS EMPRESTADOS =====')
+                          for livro in dados_usuario.livros_emprestados:
+                           print(f'LIVRO: {livro.titulo}')
+                        print('--------------------')
+
+                        print('1 - sim')
+                        print('2 - não')
+                        opcao5 = int(input('esse é o usuário que você deseja realizar o emprestimo?'))
+
+                        if opcao5 == 1:
+                            realizar_emprestimo(dados_usuario)
+                        elif opcao5 == 2:
+                            print('se você deseja realizar o emprestimo para outro cliente, tente novamente')
+                        else:
+                            print('opção invalida, por favor insira novamente')
+            elif opcao4 == 2:
+                if not lista_de_livros or not lista_de_usuarios:
+                    print(
+                        'não foi possivel realizar a devolução pois não há livros registrados ou não há clientes registrados')
+                else:
+                    tituloL = input('qual o titulo do livro que você deseja remover?').strip().upper()
+
+                    livro_pra_devolver = [l for l in lista_de_livros if l.titulo == tituloL]
+
+                    for livro in livro_pra_devolver:
+                        if livro.disponivel:
+                            print('esse livro ainda está disponível, ou seja não foi emprestado então não precisa '
+                                  'devolver')
+                        else:
+                            print(f'TITULO: {livro.titulo}')
+                            print(f'AUTOR: {livro.autor}')
+                            print(f'ANO DE LANÇAMENTO: {livro.ano}')
+                            print(f'USUÁRIO ATUAL: {livro.usuario_atual}')
+                            print('---------------------------')
+                            print('1 - sim')
+                            print('2 - não')
+                            opcao7 = int(input('esse é o livro que você deseja devolver'))
+
+                            if opcao7 == 1:
+                                devolver_livro(livro)
+                            elif opcao7 == 2:
+                                print('se deseja devolver outro livro, tente novamente')
+                            else:
+                                print('opção inválida, por favor tente novamente')
+            else:
+                print('opção inválida, por favor tente novamente')
+        elif opcao == 4:
+            print('saindo do programa....')
+            break
+        else:
+            print('opção inválida, por favor digite novamente')
+
+    except livro_nao_encontrado_exception as e:
+        print(f'erro: {e}')
+    except titulo_duplicado_exception as e:
+        print(f'erro: {e}')
+    except data_invalida_exception as e:
+        print(f'erro: {e}')
+    except ValueError as e:
+        print(f'erro: entrada de dados invalida, por favor tente novamente')
+    except cpf_duplicado_exception as e:
+        print(f'erro: {e}')
+    except cpf_invalido_exception as e:
+        print(f'erro: {e}')
+    except usuario_nao_encontrado_exception as e:
+        print(f'erro: {e}')
+    except livro_indisponivel_exception as e:
+        print(f'erro: {e}')
